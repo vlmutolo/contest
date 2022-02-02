@@ -17,9 +17,6 @@ fn main() {
             for _ in 0..256 {
                 let n: u64 = rng.gen();
                 for _ in 0..2048 {
-                    // Do it twice to make sure that it *should*
-                    // cancel out to zero.
-                    do_xors(n, &atomic, &unsync);
                     do_xors(n, &atomic, &unsync);
                 }
             }
@@ -31,11 +28,11 @@ fn main() {
     threads.into_iter().for_each(|t| t.join().unwrap());
 
     println!("unsync: {:064b}", unsync.get());
-    println!("atomic: {:064b}", unsync.get());
+    println!("atomic: {:064b}", atomic.get());
     println!("took {:.0?}", start.elapsed());
 }
 
-#[inline(never)]
+// Try commenting out `atomic.fetch_xor(n);`.
 fn do_xors(n: u64, atomic: &SharedAtomic, unsync: &SharedUnsync) {
     atomic.fetch_xor(n);
     unsync.fetch_xor(n);

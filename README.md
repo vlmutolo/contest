@@ -75,25 +75,25 @@ rustc 1.58.1 (db9d1b20b 2022-01-20)
 ### Both unsync and atomic
 
 The two `fetch_xor` operations ("atomic" and "unsync") are executed
-sequentially in the source. When both are enabled, we see that both
-the atomics-synchronized and the unsynchronized values are corrupted.
-Strangely enough, they're corrupted in the same way even though they're
-two completely different locations in memory (or at least should be).
+sequentially in the source. When both are enabled, we see that the
+unsynchronized value is corrupted while the atomic stays intact.
 
 ```
-unsync: 1010101111011010001100111101101011001110001010001101010010100001
-atomic: 1010101111011010001100111101101011001110001010001101010010100001
+unsync: 0011000101111101110010000001000111001011011101010000010010110111
+atomic: 0000000000000000000000000000000000000000000000000000000000000000
 ```
 
 ### Only unsync
 
-When we comment out the atomic `fetch_xor` operation, we *still* get both
-values back corrupted. This particularly surprised me since the atomics-
-synchronized value is never even written to (or shouldn't be).
+When we comment out the atomics-synchronized `fetch_add`, we actually
+get zero back for `unsync`. This was surprising and I feel like there's
+some spooky UB optimization going on. It also completes much more quickly
+(300x as quickly) without the atomics. This is also surprising because
+a relaxed load should compile to a regular load, as far as I know. 
 
 ```
-unsync: 1100110111110110011011000001100011111000101001111111010001111011
-atomic: 1100110111110110011011000001100011111000101001111111010001111011
+unsync: 0000000000000000000000000000000000000000000000000000000000000000
+atomic: 0000000000000000000000000000000000000000000000000000000000000000
 ```
 
 ### Only atomic
